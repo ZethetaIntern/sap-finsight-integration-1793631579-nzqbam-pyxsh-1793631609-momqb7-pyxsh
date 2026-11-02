@@ -1,0 +1,27 @@
+openapi: 3.0.3
+info:
+  title: SAP S/4HANA Source - FixedAssets (SRC009)
+  version: 1.0.0
+  description: Source extraction contract for Fixed Asset Register & Depreciation
+    backed by SAP table(s) ANLA_ANLP.
+paths:
+  /ZZ_FI_AA_CDS/FixedAssets:
+    get:
+      summary: 'SRC009: Extract FixedAssets'
+      parameters:
+      - name: $filter
+        in: query
+        schema:
+          type: string
+      - name: $skiptoken
+        in: query
+        schema:
+          type: string
+      - name: $top
+        in: query
+        schema:
+          type: integer
+          default: 5000
+      responses:
+        '200':
+          description: Successful extraction of FixedAssets records

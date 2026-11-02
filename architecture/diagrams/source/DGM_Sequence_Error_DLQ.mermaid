@@ -1,0 +1,25 @@
+sequenceDiagram
+    autonumber
+    participant K as Apache Kafka
+    participant L as FinSight Loader
+    participant CB as Circuit Breaker
+    participant FS as Zetheta FinSight 4.2
+    participant DLQ as Dead Letter Queue (Kafka/Postgres)
+    participant Ops as Operations Alerting (PagerDuty)
+
+    K->>L: Consume Transformed Message (Doc: 10000452)
+    L->>CB: Execute Request through Circuit Breaker
+    CB->>FS: POST /api/v1/financial/journal-entries
+    FS-->>CB: 429 Too Many Requests (Retry-After: 30s)
+    CB->>CB: Record Throttle Event
+    L->>L: Sleep 30s + Randomized Jitter (3.4s)
+    L->>FS: Retry Attempt 1: POST /api/v1/financial/journal-entries
+    FS-->>CB: 503 Service Unavailable (FinSight Overload)
+    CB->>CB: Increment Failure Count (Threshold: 5)
+    L->>L: Exponential Backoff (60s)
+    L->>FS: Retry Attempt 2: POST /api/v1/financial/journal-entries
+    FS-->>CB: 503 Service Unavailable
+    CB->>CB: Failure Threshold Exceeded -> State = OPEN
+    L->>DLQ: Route to DLQ (ERR-LOAD-002, attempts: 3)
+    DLQ->>Ops: Emit PagerDuty P2 Alert (FinSight API 503 Circuit Open)
+    L->>K: Commit Offset (Unblock partition consumer)

@@ -1,0 +1,27 @@
+openapi: 3.0.3
+info:
+  title: SAP S/4HANA Source - AccountsPayable (SRC002)
+  version: 1.0.0
+  description: Source extraction contract for Vendor Invoices and Payables backed
+    by SAP table(s) BSIK_BSAK.
+paths:
+  /ZZ_FIN_AP_CDS/VendorInvoices:
+    get:
+      summary: 'SRC002: Extract AccountsPayable'
+      parameters:
+      - name: $filter
+        in: query
+        schema:
+          type: string
+      - name: $skiptoken
+        in: query
+        schema:
+          type: string
+      - name: $top
+        in: query
+        schema:
+          type: integer
+          default: 5000
+      responses:
+        '200':
+          description: Successful extraction of AccountsPayable records

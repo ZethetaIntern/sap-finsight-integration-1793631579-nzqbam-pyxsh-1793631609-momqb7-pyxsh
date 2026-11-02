@@ -1,0 +1,24 @@
+openapi: 3.0.3
+info:
+  title: FinSight 4.2 Ingestion - BudgetPerformance (DST011)
+  version: 4.2.0
+  description: 'Ingestion contract for Departmental Budget Performance in Zetheta
+    FinSight 4.2. [Assumed Contract: Standard Zetheta Ingestion Specification].'
+paths:
+  /controlling/budget-performance/batch:
+    post:
+      summary: 'DST011: Ingest BudgetPerformance batch'
+      parameters:
+      - name: X-Tenant-ID
+        in: header
+        required: true
+        schema:
+          type: string
+      - name: X-Idempotency-Key
+        in: header
+        required: true
+        schema:
+          type: string
+      responses:
+        '201':
+          description: BudgetPerformance batch ingested successfully

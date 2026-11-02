@@ -1,0 +1,9 @@
+flowchart TD
+    SAP_ODP["SAP S/4HANA ODP Queue<br/>(Delta Token: t_now)"] -->|"1. Poll Delta (every 30m)"| Extractor["SAP Extractor Service"]
+    Extractor -->|"2. Extract Envelope (5000 records)"| KafkaRaw["Kafka Topic: sap.raw.{domain}"]
+    KafkaRaw -->|"3. Stream Stream Consume"| Transform["Transformation Worker"]
+    Transform -->|"4. Execute Domain Mapping and Currency Conv"| Canonical["Canonical Event"]
+    Canonical -->|"5. Publish Transformed"| KafkaTrans["Kafka Topic: sap.transformed.{domain}"]
+    KafkaTrans -->|"6. Pull Batch"| FinSightLoader["FinSight Loader Service"]
+    FinSightLoader -->|"7. Ingestion POST (HTTP 200 OK)"| FinSight["Zetheta FinSight 4.2"]
+    FinSightLoader -->|"8. Commit Delta Offset"| Postgres["Recon DB Checkpoint"]

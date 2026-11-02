@@ -1,0 +1,27 @@
+openapi: 3.0.3
+info:
+  title: SAP S/4HANA Source - CostCentre (SRC004)
+  version: 1.0.0
+  description: Source extraction contract for Cost Centre Master & Postings backed
+    by SAP table(s) CSKS_COSP.
+paths:
+  /ZZ_FIN_CO_CDS/CostCentres:
+    get:
+      summary: 'SRC004: Extract CostCentre'
+      parameters:
+      - name: $filter
+        in: query
+        schema:
+          type: string
+      - name: $skiptoken
+        in: query
+        schema:
+          type: string
+      - name: $top
+        in: query
+        schema:
+          type: integer
+          default: 5000
+      responses:
+        '200':
+          description: Successful extraction of CostCentre records

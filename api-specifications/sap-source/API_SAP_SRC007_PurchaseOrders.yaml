@@ -1,0 +1,27 @@
+openapi: 3.0.3
+info:
+  title: SAP S/4HANA Source - PurchaseOrders (SRC007)
+  version: 1.0.0
+  description: Source extraction contract for Purchase Orders Procurement backed by
+    SAP table(s) EKKO_EKPO.
+paths:
+  /ZZ_MM_PO_CDS/PurchaseOrders:
+    get:
+      summary: 'SRC007: Extract PurchaseOrders'
+      parameters:
+      - name: $filter
+        in: query
+        schema:
+          type: string
+      - name: $skiptoken
+        in: query
+        schema:
+          type: string
+      - name: $top
+        in: query
+        schema:
+          type: integer
+          default: 5000
+      responses:
+        '200':
+          description: Successful extraction of PurchaseOrders records

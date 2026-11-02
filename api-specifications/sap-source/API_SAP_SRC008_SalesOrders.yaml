@@ -1,0 +1,27 @@
+openapi: 3.0.3
+info:
+  title: SAP S/4HANA Source - SalesOrders (SRC008)
+  version: 1.0.0
+  description: Source extraction contract for Sales Orders & Deliveries backed by
+    SAP table(s) VBAK_VBAP.
+paths:
+  /ZZ_SD_SO_CDS/SalesOrders:
+    get:
+      summary: 'SRC008: Extract SalesOrders'
+      parameters:
+      - name: $filter
+        in: query
+        schema:
+          type: string
+      - name: $skiptoken
+        in: query
+        schema:
+          type: string
+      - name: $top
+        in: query
+        schema:
+          type: integer
+          default: 5000
+      responses:
+        '200':
+          description: Successful extraction of SalesOrders records

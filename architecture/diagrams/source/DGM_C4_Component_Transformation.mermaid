@@ -1,0 +1,20 @@
+graph TB
+    subgraph TransformContainer ["Transformation and Validation Service (Node.js/TypeScript)"]
+        KafkaConsumer["Kafka Consumer Group<br/>Consumes from sap.raw.*"]
+        SchemaValidator["JSON Schema Validator<br/>Validates against canonical definitions"]
+        MappingRouter["Domain Mapping Router<br/>Dispatches to 1 of 10 domain transformers"]
+        CurrencyEngine["Currency Normalizer<br/>Converts to Group INR using TCURR cache"]
+        PeriodMapper["Fiscal Period Mapper<br/>Maps SAP 001-016 to Gregorian Calendar"]
+        HierarchyFlattener["Hierarchy Flattener<br/>Flattens 7-level Cost Centre trees"]
+        DLQHandler["DLQ Router<br/>Catches ERR-MAP-* errors, routes to DLQ"]
+        OutboxProducer["Transformed Producer<br/>Publishes to sap.transformed.{domain}"]
+    end
+
+    KafkaConsumer --> SchemaValidator
+    SchemaValidator -->|"Schema Valid"| MappingRouter
+    SchemaValidator -->|"Validation Failed"| DLQHandler
+    MappingRouter --> CurrencyEngine
+    CurrencyEngine --> PeriodMapper
+    PeriodMapper --> HierarchyFlattener
+    HierarchyFlattener --> OutboxProducer
+    HierarchyFlattener -->|"Mapping Exception"| DLQHandler

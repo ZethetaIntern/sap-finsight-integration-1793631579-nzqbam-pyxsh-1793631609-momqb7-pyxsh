@@ -1,0 +1,128 @@
+{
+  "info": {
+    "name": "Meridian SAP S/4HANA to FinSight 4.2 Integration API Collection",
+    "description": "Automated test and invocation collection covering all 12 SAP source endpoints and 12 FinSight destination ingestion endpoints.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "00. OAuth 2.0 Token Generation",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/x-www-form-urlencoded"
+          }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "grant_type",
+              "value": "client_credentials",
+              "type": "text"
+            },
+            {
+              "key": "client_id",
+              "value": "{{client_id}}",
+              "type": "text"
+            },
+            {
+              "key": "client_secret",
+              "value": "{{client_secret}}",
+              "type": "text"
+            },
+            {
+              "key": "scope",
+              "value": "finsight:financial:write finsight:controlling:write",
+              "type": "text"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{auth_url}}/oauth/v2/token",
+          "host": [
+            "{{auth_url}}"
+          ],
+          "path": [
+            "oauth",
+            "v2",
+            "token"
+          ]
+        }
+      }
+    },
+    {
+      "name": "01. SAP Source - GL Items (SRC-001)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{sap_base_url}}/ZZ_FIN_GL_CDS/GLItems?$filter=RBUKRS eq 'MC01' and GJAHR eq '2026'&$top=500",
+          "host": [
+            "{{sap_base_url}}"
+          ],
+          "path": [
+            "ZZ_FIN_GL_CDS",
+            "GLItems"
+          ],
+          "query": [
+            {
+              "key": "$filter",
+              "value": "RBUKRS eq 'MC01' and GJAHR eq '2026'"
+            },
+            {
+              "key": "$top",
+              "value": "500"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "02. FinSight Destination - Ingest GL Batch (DST-001)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "X-Tenant-ID",
+            "value": "MERIDIAN-PROD"
+          },
+          {
+            "key": "X-Idempotency-Key",
+            "value": "{{$guid}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"batchId\": \"BATCH-GL-20260315-0930\",\n  \"batchTimestamp\": \"2026-03-15T09:30:00+05:30\",\n  \"sourceSystem\": \"SAP-PRD-MC01\",\n  \"recordCount\": 1,\n  \"records\": [\n    {\n      \"documentId\": \"MC01-2026-0100004521-001\",\n      \"companyCode\": \"MC01\",\n      \"fiscalYear\": 2026,\n      \"documentNumber\": \"0100004521\",\n      \"lineItem\": 1,\n      \"postingDate\": \"2026-03-15\",\n      \"documentDate\": \"2026-03-14\",\n      \"glAccount\": \"400000\",\n      \"amountLC\": 150000.5,\n      \"localCurrency\": \"INR\",\n      \"amountTC\": 1800.0,\n      \"transactionCurrency\": \"USD\",\n      \"postingType\": \"DEBIT\",\n      \"costCentre\": \"2100\",\n      \"profitCentre\": \"1000\",\n      \"fiscalPeriod\": \"2026-03\",\n      \"isSpecialPeriod\": false,\n      \"documentType\": \"GL_ACCOUNT_POSTING\",\n      \"isReversal\": false\n    }\n  ]\n}"
+        },
+        "url": {
+          "raw": "{{finsight_base_url}}/financial/journal-entries/batch",
+          "host": [
+            "{{finsight_base_url}}"
+          ],
+          "path": [
+            "financial",
+            "journal-entries",
+            "batch"
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,319 @@
+openapi: 3.0.3
+info:
+  title: SAP S/4HANA 2023 FPS02 - Source Extraction OData/REST API
+  version: 1.0.0
+  description: Enterprise source API specification for Meridian Manufacturing Ltd.
+    exposing 12 financial and operational data domains via SAP CDS Views and ODP Delta
+    queues. Verified against SAP S/4HANA 2023 FPS02 data dictionary.
+servers:
+- url: https://sap-prd.meridian.internal:44300/sap/opu/odata/sap
+  description: SAP Production Environment (Hinjawadi DC, Client 100)
+- url: https://sap-qas.meridian.internal:44300/sap/opu/odata/sap
+  description: SAP Quality Assurance Environment (Client 200)
+security:
+- SAP_Basic_or_ClientCert: []
+paths:
+  /ZZ_FIN_GL_CDS/GLItems:
+    get:
+      summary: 'SRC-001: General Ledger Journal Entries (ACDOCA)'
+      description: Extracts Universal Journal line items using ODP Delta tokens.
+      parameters:
+      - name: $filter
+        in: query
+        schema:
+          type: string
+        example: RBUKRS eq 'MC01' and GJAHR eq '2026'
+      - name: $skiptoken
+        in: query
+        schema:
+          type: string
+        description: ODP cursor token for next page
+      - name: $top
+        in: query
+        schema:
+          type: integer
+          default: 5000
+      responses:
+        '200':
+          description: Successful extraction of GL items
+          headers:
+            delta-token:
+              schema:
+                type: string
+              description: Current delta token for subsequent sync
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SAP_GL_Response'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /ZZ_FIN_AP_CDS/VendorInvoices:
+    get:
+      summary: 'SRC-002: Accounts Payable Invoices (BSIK/BSAK/LFA1)'
+      description: Extracts open and cleared vendor items with vendor master data
+        enrichment.
+      parameters:
+      - name: $filter
+        in: query
+        schema:
+          type: string
+      - name: $top
+        in: query
+        schema:
+          type: integer
+          default: 5000
+      responses:
+        '200':
+          description: AP items extracted successfully
+  /ZZ_FIN_AR_CDS/CustomerReceivables:
+    get:
+      summary: 'SRC-003: Accounts Receivable Items (BSID/BSAD/KNA1)'
+      description: Extracts open receivables, customer credit data, and payment history.
+      parameters:
+      - name: $filter
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: AR items extracted successfully
+  /ZZ_FIN_CO_CDS/CostCentres:
+    get:
+      summary: 'SRC-004: Cost Centre Master and Actuals (CSKS/COSP/COSS)'
+      description: Extracts cost centre hierarchy, controlling area postings, and
+        texts.
+      parameters:
+      - name: $filter
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Cost Centre records extracted successfully
+  /ZZ_FIN_PCA_CDS/ProfitCentres:
+    get:
+      summary: 'SRC-005: Profit Centre Master and Segment Allocations (CEPC)'
+      description: Extracts profit centre organizational hierarchy and segment assignments.
+      parameters:
+      - name: $filter
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Profit Centre items extracted successfully
+  /ZZ_FIN_ML_CDS/MaterialValuations:
+    get:
+      summary: 'SRC-006: Material Ledger Actual Costing (MBEW/CKMLCR)'
+      description: Extracts inventory moving average prices, standard costs, and price
+        variances.
+      parameters:
+      - name: $filter
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Material Ledger items extracted successfully
+  /ZZ_MM_PO_CDS/PurchaseOrders:
+    get:
+      summary: 'SRC-007: Purchase Orders Procurement (EKKO/EKPO/EKET)'
+      description: Extracts PO headers, line items, schedule lines, and GR/IR clearing
+        statuses.
+      parameters:
+      - name: $filter
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Purchase orders extracted successfully
+  /ZZ_SD_SO_CDS/SalesOrders:
+    get:
+      summary: 'SRC-008: Sales Orders and Order Pipeline (VBAK/VBAP/VBEP)'
+      description: Extracts sales order schedule lines, pricing conditions, and net
+        values.
+      parameters:
+      - name: $filter
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Sales orders extracted successfully
+  /ZZ_FI_AA_CDS/FixedAssets:
+    get:
+      summary: 'SRC-009: Fixed Asset Master and Depreciation (ANLA/ANLZ/ANLP)'
+      description: Extracts capital asset register, capitalization dates, and accumulated
+        depreciation.
+      parameters:
+      - name: $filter
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Fixed assets extracted successfully
+  /ZZ_FI_BL_CDS/BankStatements:
+    get:
+      summary: 'SRC-010: Electronic Bank Statements (FEBKO/FEBEP)'
+      description: Extracts intra-day electronic bank statements, MT940 line items,
+        and clearing status.
+      parameters:
+      - name: $filter
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Bank statements extracted successfully
+  /ZZ_CO_BGT_CDS/BudgetActuals:
+    get:
+      summary: 'SRC-011: Controlling Budget vs. Actual Variance (COSP/COSS)'
+      description: Extracts annual/monthly cost centre budget allocations and actual
+        variance totals.
+      parameters:
+      - name: $filter
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Budget variance records extracted successfully
+  /ZZ_MM_INV_CDS/InventoryItems:
+    get:
+      summary: 'SRC-012: Plant Inventory and Storage Location Balances (MARD)'
+      description: Extracts stock quantities across unrestricted, inspection, and
+        blocked valuation states.
+      parameters:
+      - name: $filter
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Inventory balances extracted successfully
+components:
+  securitySchemes:
+    SAP_Basic_or_ClientCert:
+      type: http
+      scheme: basic
+      description: Dedicated system user INTEG_SVC_FDE or X.509 Client Certificate
+        authentication.
+  schemas:
+    SAP_GL_Response:
+      type: object
+      properties:
+        d:
+          type: object
+          properties:
+            results:
+              type: array
+              items:
+                $ref: '#/components/schemas/ACDOCA_Record'
+            __next:
+              type: string
+    ACDOCA_Record:
+      type: object
+      required:
+      - RCLNT
+      - RBUKRS
+      - GJAHR
+      - BELNR
+      - BUZEI
+      - RACCT
+      - HSL
+      - RHCUR
+      - BUDAT
+      properties:
+        RCLNT:
+          type: string
+          example: '100'
+        RLDNR:
+          type: string
+          example: 0L
+        RBUKRS:
+          type: string
+          example: MC01
+        GJAHR:
+          type: string
+          example: '2026'
+        BELNR:
+          type: string
+          example: '0100004521'
+        BUZEI:
+          type: string
+          example: '001'
+        RACCT:
+          type: string
+          example: '0000400000'
+        HSL:
+          type: number
+          format: decimal
+          example: 150000.5
+        RHCUR:
+          type: string
+          example: INR
+        WSL:
+          type: number
+          format: decimal
+          example: 1800.0
+        RWCUR:
+          type: string
+          example: USD
+        DRCRK:
+          type: string
+          enum:
+          - S
+          - H
+          example: S
+        BUDAT:
+          type: string
+          example: '20260315'
+        BLDAT:
+          type: string
+          example: '20260314'
+        MONAT:
+          type: string
+          example: '012'
+        KOSTL:
+          type: string
+          example: '0000002100'
+        PRCTR:
+          type: string
+          example: '0000001000'
+        BLART:
+          type: string
+          example: SA
+  responses:
+    Unauthorized:
+      description: 'Authentication failure: invalid SAP user or certificate'
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+    TooManyRequests:
+      description: RFC pool exhausted or SAP Basis throttling active
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+    ServiceUnavailable:
+      description: SAP instance under nightly maintenance or batch blackout (RGGBS000)
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string

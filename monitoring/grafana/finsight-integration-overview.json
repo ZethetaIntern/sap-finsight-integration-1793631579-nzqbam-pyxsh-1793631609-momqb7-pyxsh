@@ -1,0 +1,290 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 4,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "liveNow": true,
+  "panels": [
+    {
+      "id": 1,
+      "title": "MON-001: Pipeline Health Overview",
+      "type": "stat",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
+      "targets": [
+        {
+          "expr": "sum(pipeline_health_status)",
+          "legendFormat": "Pipeline Health"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "GREEN (Healthy)",
+                  "color": "green"
+                }
+              }
+            },
+            {
+              "type": "value",
+              "options": {
+                "1": {
+                  "text": "YELLOW (Lag > 2h)",
+                  "color": "yellow"
+                }
+              }
+            },
+            {
+              "type": "value",
+              "options": {
+                "2": {
+                  "text": "RED (Breached / Down)",
+                  "color": "red"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": 2,
+      "title": "MON-002: Throughput (Records/Sec)",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
+      "targets": [
+        {
+          "expr": "sum by (domain) (rate(records_processed_total[5m]))",
+          "legendFormat": "{{domain}}"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "MON-003: Latency Distribution (P95)",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(api_duration_seconds_bucket[5m])) by (le))",
+          "legendFormat": "P95 Latency (s)"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "MON-004: Error Rate (%)",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(errors_total[5m])) / sum(rate(requests_total[5m])) * 100",
+          "legendFormat": "Error Rate %"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "MON-005: DLQ Depth & Lag Trend",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 4
+      },
+      "targets": [
+        {
+          "expr": "kafka_consumergroup_lag{topic=~'.*dlq.*'}",
+          "legendFormat": "DLQ Depth"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "MON-006: Reconciliation Status",
+      "type": "table",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 4
+      },
+      "targets": [
+        {
+          "expr": "reconciliation_batch_status",
+          "legendFormat": "{{domain}}"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "MON-007: SAP RFC Pool Utilisation",
+      "type": "gauge",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 4
+      },
+      "targets": [
+        {
+          "expr": "(sap_rfc_active_connections / 50) * 100",
+          "legendFormat": "RFC Pool %"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "MON-008: FinSight Ingestion API Health & Rate Limits",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 4
+      },
+      "targets": [
+        {
+          "expr": "finsight_rate_limit_remaining",
+          "legendFormat": "Remaining Quota"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "title": "MON-009: Data Freshness Lag (Hours)",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 8
+      },
+      "targets": [
+        {
+          "expr": "(time() - max by (domain) (last_successful_load_timestamp)) / 3600",
+          "legendFormat": "{{domain}} Freshness (h)"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "title": "MON-010: Compute Resource Utilisation (CPU/Mem)",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 8
+      },
+      "targets": [
+        {
+          "expr": "sum(container_cpu_usage_seconds_total)",
+          "legendFormat": "CPU"
+        },
+        {
+          "expr": "sum(container_memory_working_set_bytes)",
+          "legendFormat": "Memory"
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "title": "MON-011: Kafka Consumer Lag by Partition",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 8
+      },
+      "targets": [
+        {
+          "expr": "sum by (topic) (kafka_consumergroup_lag)",
+          "legendFormat": "{{topic}}"
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "title": "MON-012: Circuit Breaker State",
+      "type": "stat",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 8
+      },
+      "targets": [
+        {
+          "expr": "circuit_breaker_state",
+          "legendFormat": "Circuit Breaker"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "CLOSED (Normal)",
+                  "color": "green"
+                }
+              }
+            },
+            {
+              "type": "value",
+              "options": {
+                "1": {
+                  "text": "OPEN (Tripped)",
+                  "color": "red"
+                }
+              }
+            },
+            {
+              "type": "value",
+              "options": {
+                "2": {
+                  "text": "HALF-OPEN (Probing)",
+                  "color": "yellow"
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "schemaVersion": 38,
+  "title": "Meridian SAP S/4HANA to FinSight 4.2 Integration Cockpit",
+  "uid": "meridian-sap-finsight-v2"
+}

@@ -1,0 +1,330 @@
+openapi: 3.0.3
+info:
+  title: Zetheta FinSight 4.2 - Financial Analytics Ingestion REST API
+  version: 4.2.0
+  description: 'Target financial ingestion API contract for Zetheta FinSight 4.2.
+    [Assumed Contract: Standard Zetheta Ingestion Specification]. Supports micro-batching,
+    strict schema validation, OAuth 2.0 Client Credentials, and idempotency guarantees.'
+servers:
+- url: https://api-mumbai.finsight.zetheta.com/v1
+  description: FinSight Production Cloud (AWS Mumbai ap-south-1)
+- url: https://staging-mumbai.finsight.zetheta.com/v1
+  description: FinSight Staging Sandbox (AWS Mumbai ap-south-1)
+security:
+- OAuth2:
+  - finsight:financial:write
+  - finsight:controlling:write
+  - finsight:procurement:write
+paths:
+  /financial/journal-entries/batch:
+    post:
+      summary: 'DST-001: Ingest General Ledger Journal Entries'
+      description: Micro-batch endpoint accepting up to 500 validated journal entry
+        records per payload.
+      parameters:
+      - name: X-Tenant-ID
+        in: header
+        required: true
+        schema:
+          type: string
+          example: MERIDIAN-PROD
+      - name: X-Idempotency-Key
+        in: header
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JournalEntryBatchRequest'
+      responses:
+        '201':
+          description: Micro-batch successfully ingested and indexed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchIngestResponse'
+        '400':
+          $ref: '#/components/responses/400_BadRequest'
+        '401':
+          $ref: '#/components/responses/401_Unauthorized'
+        '409':
+          $ref: '#/components/responses/409_DuplicateEntry'
+        '422':
+          $ref: '#/components/responses/422_BusinessRuleViolation'
+        '429':
+          $ref: '#/components/responses/429_RateLimited'
+        '503':
+          $ref: '#/components/responses/503_ServiceUnavailable'
+  /payables/invoices/batch:
+    post:
+      summary: 'DST-002: Ingest Vendor Invoices and Payables'
+      responses:
+        '201':
+          description: Vendor invoices ingested successfully
+  /receivables/invoices/batch:
+    post:
+      summary: 'DST-003: Ingest Customer Receivables and Dunning Records'
+      responses:
+        '201':
+          description: Customer receivables ingested successfully
+  /controlling/cost-centres/batch:
+    post:
+      summary: 'DST-004: Ingest Flattened Cost Centre Performance'
+      responses:
+        '201':
+          description: Cost centre performance ingested successfully
+  /controlling/profit-centres/batch:
+    post:
+      summary: 'DST-005: Ingest Profit Centre Margins and Segment Allocations'
+      responses:
+        '201':
+          description: Profit centre margins ingested successfully
+  /inventory/material-costs/batch:
+    post:
+      summary: 'DST-006: Ingest Material Ledger Costing and Variances'
+      responses:
+        '201':
+          description: Material costs ingested successfully
+  /procurement/purchase-orders/batch:
+    post:
+      summary: 'DST-007: Ingest Purchase Orders and Spend Summaries'
+      responses:
+        '201':
+          description: Purchase orders ingested successfully
+  /sales/orders/batch:
+    post:
+      summary: 'DST-008: Ingest Sales Orders and Backlog Records'
+      responses:
+        '201':
+          description: Sales orders ingested successfully
+  /assets/register/batch:
+    post:
+      summary: 'DST-009: Ingest Fixed Assets Register and Depreciation'
+      responses:
+        '201':
+          description: Fixed asset register ingested successfully
+  /treasury/cash-positions/batch:
+    post:
+      summary: 'DST-010: Ingest Bank Cash Positions and Statement Feeds'
+      responses:
+        '201':
+          description: Cash positions ingested successfully
+  /controlling/budget-performance/batch:
+    post:
+      summary: 'DST-011: Ingest Departmental Budget vs. Actual Performance'
+      responses:
+        '201':
+          description: Budget performance ingested successfully
+  /inventory/balances/batch:
+    post:
+      summary: 'DST-012: Ingest Plant Inventory Balances'
+      responses:
+        '201':
+          description: Inventory balances ingested successfully
+components:
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      description: Azure Active Directory / FinSight OAuth 2.0 Client Credentials
+        Grant
+      flows:
+        clientCredentials:
+          tokenUrl: https://auth.finsight.zetheta.com/oauth/v2/token
+          scopes:
+            finsight:financial:write: Write access to GL, AP, and AR financial ledgers
+            finsight:controlling:write: Write access to Cost Centre and Profit Centre
+              models
+            finsight:procurement:write: Write access to Procurement and Material records
+  schemas:
+    JournalEntryBatchRequest:
+      type: object
+      required:
+      - batchId
+      - batchTimestamp
+      - sourceSystem
+      - recordCount
+      - records
+      properties:
+        batchId:
+          type: string
+          example: BATCH-GL-20260315-0930
+        batchTimestamp:
+          type: string
+          format: date-time
+          example: '2026-03-15T09:30:00+05:30'
+        sourceSystem:
+          type: string
+          example: SAP-PRD-MC01
+        recordCount:
+          type: integer
+          example: 500
+        records:
+          type: array
+          items:
+            $ref: '#/components/schemas/CanonicalJournalEntry'
+    CanonicalJournalEntry:
+      type: object
+      required:
+      - documentId
+      - companyCode
+      - fiscalYear
+      - documentNumber
+      - lineItem
+      - postingDate
+      - documentDate
+      - glAccount
+      - amountLC
+      - localCurrency
+      - postingType
+      - fiscalPeriod
+      - documentType
+      properties:
+        documentId:
+          type: string
+          example: MC01-2026-0100004521-001
+        companyCode:
+          type: string
+          example: MC01
+        fiscalYear:
+          type: integer
+          example: 2026
+        documentNumber:
+          type: string
+          example: '0100004521'
+        lineItem:
+          type: integer
+          example: 1
+        postingDate:
+          type: string
+          format: date
+          example: '2026-03-15'
+        documentDate:
+          type: string
+          format: date
+          example: '2026-03-14'
+        glAccount:
+          type: string
+          example: '400000'
+        amountLC:
+          type: number
+          format: decimal
+          example: 150000.5
+        localCurrency:
+          type: string
+          example: INR
+        amountTC:
+          type: number
+          format: decimal
+          example: 1800.0
+        transactionCurrency:
+          type: string
+          example: USD
+        postingType:
+          type: string
+          enum:
+          - DEBIT
+          - CREDIT
+          example: DEBIT
+        costCentre:
+          type: string
+          nullable: true
+          example: '2100'
+        profitCentre:
+          type: string
+          nullable: true
+          example: '1000'
+        fiscalPeriod:
+          type: string
+          example: 2026-03
+        isSpecialPeriod:
+          type: boolean
+          default: false
+        documentType:
+          type: string
+          example: GL_ACCOUNT_POSTING
+        isReversal:
+          type: boolean
+          default: false
+    BatchIngestResponse:
+      type: object
+      properties:
+        batchId:
+          type: string
+          example: BATCH-GL-20260315-0930
+        status:
+          type: string
+          example: PROCESSED
+        recordsReceived:
+          type: integer
+          example: 500
+        recordsLoaded:
+          type: integer
+          example: 500
+        recordsSkipped:
+          type: integer
+          example: 0
+        ingestionTimestamp:
+          type: string
+          format: date-time
+    ErrorResponse:
+      type: object
+      properties:
+        errorCode:
+          type: string
+          example: INVALID_REQUEST
+        message:
+          type: string
+          example: JSON schema validation failed
+        timestamp:
+          type: string
+          format: date-time
+        details:
+          type: array
+          items:
+            type: string
+  responses:
+    400_BadRequest:
+      description: INVALID_REQUEST / INVALID_DATE_FORMAT / INVALID_CURRENCY_CODE
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    401_Unauthorized:
+      description: TOKEN_EXPIRED / INVALID_TOKEN
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    409_DuplicateEntry:
+      description: 'DUPLICATE_ENTRY: Idempotent duplicate detected'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    422_BusinessRuleViolation:
+      description: BUSINESS_RULE_VIOLATION / REFERENTIAL_INTEGRITY
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    429_RateLimited:
+      description: 'RATE_LIMITED: Ingestion rate limit exceeded'
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+          description: Seconds to wait before retrying
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    503_ServiceUnavailable:
+      description: 'SERVICE_UNAVAILABLE: Analytics platform undergoing maintenance'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'

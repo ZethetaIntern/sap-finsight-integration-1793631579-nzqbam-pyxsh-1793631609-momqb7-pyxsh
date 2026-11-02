@@ -1,0 +1,17 @@
+graph TB
+    subgraph ExtractorContainer ["SAP Extraction Service (Node.js/TypeScript)"]
+        JobController["Extraction Job Controller<br/>Coordinates execution cycles and domain tasks"]
+        BlackoutGuard["Blackout Window Guard<br/>Enforces 01:00-04:30 IST freeze for RGGBS000"]
+        RFCPoolMgr["RFC Connection Pool Manager<br/>Caps active connections at 35 of 50 max"]
+        ODPClient["ODP REST Client<br/>Queries SAP CDS Views with delta tokens"]
+        CursorPaginator["Cursor Paginator<br/>Streams 5,000-row chunks with memory safety"]
+        RawEnricher["Metadata Envelope Enricher<br/>Injects correlation_id, timestamp, plantCode"]
+        KafkaProducer["Kafka Ingestion Producer<br/>Publishes to topic: sap.raw.{domain}"]
+    end
+
+    JobController --> BlackoutGuard
+    BlackoutGuard --> RFCPoolMgr
+    RFCPoolMgr --> ODPClient
+    ODPClient --> CursorPaginator
+    CursorPaginator --> RawEnricher
+    RawEnricher --> KafkaProducer

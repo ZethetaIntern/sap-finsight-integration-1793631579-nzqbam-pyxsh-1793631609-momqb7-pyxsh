@@ -1,0 +1,24 @@
+openapi: 3.0.3
+info:
+  title: FinSight 4.2 Ingestion - CustomerReceivables (DST003)
+  version: 4.2.0
+  description: 'Ingestion contract for Customer Receivables in Zetheta FinSight 4.2.
+    [Assumed Contract: Standard Zetheta Ingestion Specification].'
+paths:
+  /receivables/invoices/batch:
+    post:
+      summary: 'DST003: Ingest CustomerReceivables batch'
+      parameters:
+      - name: X-Tenant-ID
+        in: header
+        required: true
+        schema:
+          type: string
+      - name: X-Idempotency-Key
+        in: header
+        required: true
+        schema:
+          type: string
+      responses:
+        '201':
+          description: CustomerReceivables batch ingested successfully

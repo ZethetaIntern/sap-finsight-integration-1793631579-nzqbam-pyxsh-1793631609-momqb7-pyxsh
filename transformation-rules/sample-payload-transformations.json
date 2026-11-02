@@ -1,0 +1,70 @@
+{
+  "description": "Sample input/output transformations validating GL and AP domain mappings",
+  "sample_GL_transformation": {
+    "input_sap_raw": {
+      "RCLNT": "100",
+      "RLDNR": "0L",
+      "RBUKRS": "MC01",
+      "GJAHR": "2026",
+      "BELNR": "0100004521",
+      "BUZEI": "001",
+      "RACCT": "0000400000",
+      "HSL": 150000.5,
+      "RHCUR": "INR",
+      "WSL": 1800.0,
+      "RWCUR": "USD",
+      "DRCRK": "S",
+      "BUDAT": "20260315",
+      "BLDAT": "20260314",
+      "MONAT": "012",
+      "KOSTL": "0000002100",
+      "PRCTR": "0000001000",
+      "BLART": "SA"
+    },
+    "output_canonical_transformed": {
+      "documentId": "MC01-2026-0100004521-001",
+      "companyCode": "MC01",
+      "fiscalYear": 2026,
+      "documentNumber": "0100004521",
+      "lineItem": 1,
+      "postingDate": "2026-03-15",
+      "documentDate": "2026-03-14",
+      "glAccount": "400000",
+      "amountLC": 150000.5,
+      "localCurrency": "INR",
+      "amountTC": 1800.0,
+      "transactionCurrency": "USD",
+      "postingType": "DEBIT",
+      "costCentre": "2100",
+      "profitCentre": "1000",
+      "fiscalPeriod": "2026-03",
+      "isSpecialPeriod": false,
+      "documentType": "GL_ACCOUNT_POSTING",
+      "isReversal": false
+    }
+  },
+  "sample_AP_transformation": {
+    "input_sap_raw": {
+      "BUKRS": "MC01",
+      "LIFNR": "0000105432",
+      "BELNR": "0019000845",
+      "GJAHR": "2026",
+      "DMBTR": 482500.0,
+      "ZFBDT": "20260210",
+      "ZBD1T": 30,
+      "AUGBL": "",
+      "STCD1": "27AAACM1234F1Z5",
+      "NAME1": "Bosch Automotive India Ltd."
+    },
+    "output_canonical_transformed": {
+      "vendorId": "V-105432",
+      "vendorName": "Bosch Automotive India Ltd.",
+      "invoiceNumber": "19000845",
+      "dueDate": "2026-03-12",
+      "outstandingAmountLC": 482500.0,
+      "clearingStatus": "OPEN",
+      "ageingBucket": "CURRENT",
+      "taxRegistrationNumber": "27AAACM1234F1Z5"
+    }
+  }
+}

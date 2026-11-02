@@ -1,0 +1,25 @@
+sequenceDiagram
+    autonumber
+    participant S as Scheduler
+    participant E as SAP Extractor
+    participant SAP as SAP S/4HANA (PRD)
+    participant K as Apache Kafka
+    participant T as Transform Worker
+    participant L as FinSight Loader
+    participant FS as Zetheta FinSight 4.2
+    participant DB as PostgreSQL Recon DB
+
+    S->>E: Trigger ODP Delta Sync (Domain: GL)
+    E->>E: Check Blackout Window (Is 01:00-04:30? No)
+    E->>SAP: ODP Delta Request (token: prev_token)
+    SAP-->>E: Delta Records (6,247 entries) + new_token
+    E->>K: Produce Raw Batch [sap.raw.gl]
+    K-->>T: Consume Raw Batch
+    T->>T: Validate 28 Quality Rules (All pass)
+    T->>T: Normalize Currency (TCURR) and Fiscal Period
+    T->>K: Produce Transformed Batch [sap.transformed.gl]
+    K-->>L: Consume Transformed Batch
+    L->>FS: POST /api/v1/financial/journal-entries/batch (Micro-batch: 500)
+    FS-->>L: 201 Created (batchId: BATCH-GL-20260315-0930)
+    L->>DB: Log Ingestion Receipt and Update Checkpoint
+    L->>K: Commit Consumer Offset

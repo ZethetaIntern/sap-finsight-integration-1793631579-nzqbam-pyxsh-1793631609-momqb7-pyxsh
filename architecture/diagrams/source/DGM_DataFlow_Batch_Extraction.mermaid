@@ -1,0 +1,8 @@
+flowchart TD
+    Scheduler["Quartz Cron Scheduler<br/>(e.g., Daily 05:00 IST)"] -->|"1. Check Blackout Guard"| Extractor["Batch Extractor Service"]
+    Extractor -->|"2. RFC/BAPI Call with CompanyCode and Date Filter"| SAP["SAP PRD Core Tables (ACDOCA, BKPF)"]
+    SAP -->|"3. Paginated Result Sets (Cursor chunks: 50,000)"| Extractor
+    Extractor -->|"4. Chunk and Compress Envelopes"| KafkaBatch["Kafka Partitioned Topic: sap.batch.gl"]
+    KafkaBatch -->|"5. Parallel Consumer Pool (Workers 1..N)"| TransformPool["Transform Workers (Multi-threaded)"]
+    TransformPool -->|"6. Bulk Insert Staging"| Postgres["PostgreSQL Staging and Audit Table"]
+    Postgres -->|"7. Micro-batch Dispatcher (500 recs/req)"| FinSight["FinSight Ingestion Ingress"]

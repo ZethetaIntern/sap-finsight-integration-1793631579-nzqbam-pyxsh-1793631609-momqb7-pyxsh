@@ -1,0 +1,13 @@
+flowchart TD
+    Trigger["Scheduled Reconciliation Job<br/>(Batch Completion / Daily 22:00)"] --> ReconEngine["Reconciliation Engine"]
+    ReconEngine -->|"1. Extract Hash Totals (SUM Debit, SUM Credit, Count)"| SAP["SAP S/4HANA (BAPI_ACC_GET_BALANCES)"]
+    ReconEngine -->|"2. Extract Checkpoint Totals (Ingested count and totals)"| FinSight["FinSight Audit Query API"]
+    ReconEngine -->|"3. Query Intermediate DLQ Record Count"| Postgres["Integration Recon DB"]
+    SAP --> ReconEngine
+    FinSight --> ReconEngine
+    Postgres --> ReconEngine
+    ReconEngine --> Compare{"Compare Dimension Totals:<br/>Completeness, Accuracy, Timeliness"}
+    Compare -->|"Delta == 0.00"| ReconStatus["Status: RECONCILED<br/>Write signed checkpoint receipt"]
+    Compare -->|"Delta > Tolerance"| BreakStatus["Status: BREAK_DETECTED<br/>Generate Discrepancy Breakdown"]
+    BreakStatus --> AlertAudit["Alert Dr. Kulkarni (Internal Audit) and Finance Leads"]
+    ReconStatus --> AuditReport["Store Tamper-evident Audit Ledger"]

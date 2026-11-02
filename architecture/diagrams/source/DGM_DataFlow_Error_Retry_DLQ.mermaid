@@ -1,0 +1,16 @@
+flowchart TD
+    Incoming["Incoming Record Payload"] --> Validate{"Validation Engine"}
+    Validate -->|"Fails Rules (ERR-MAP-*)"| DLQRoute["Route to Dead Letter Queue"]
+    Validate -->|"Passes Rules"| Transform["Execute Transformation"]
+    Transform --> Load{"Send to FinSight API"}
+    Load -->|"200/201 OK"| Success["Success Ack and Commit Offset"]
+    Load -->|"429 Rate Limited"| BackoffWait["Exponential Backoff with Jitter"]
+    BackoffWait --> Load
+    Load -->|"503 Unavailable / Network Fail"| CircuitCheck{"Circuit Breaker State?"}
+    CircuitCheck -->|"Closed"| RetryQueue["Retry Topic (Max 3 attempts)"]
+    RetryQueue --> Load
+    CircuitCheck -->|"Open"| FastFail["Fast-Fail to Buffer Storage"]
+    RetryQueue -->|"Max Retries Exceeded"| DLQRoute
+    DLQRoute --> DLQStore["PostgreSQL DLQ Store and Kafka dlq-topic"]
+    DLQStore --> AlertOps["Trigger PagerDuty P2 Alert"]
+    DLQStore --> AdminUI["Human Exception Portal for Reprocessing"]

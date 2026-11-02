@@ -1,0 +1,27 @@
+openapi: 3.0.3
+info:
+  title: SAP S/4HANA Source - AccountsReceivable (SRC003)
+  version: 1.0.0
+  description: Source extraction contract for Customer Receivables backed by SAP table(s)
+    BSID_BSAD.
+paths:
+  /ZZ_FIN_AR_CDS/CustomerReceivables:
+    get:
+      summary: 'SRC003: Extract AccountsReceivable'
+      parameters:
+      - name: $filter
+        in: query
+        schema:
+          type: string
+      - name: $skiptoken
+        in: query
+        schema:
+          type: string
+      - name: $top
+        in: query
+        schema:
+          type: integer
+          default: 5000
+      responses:
+        '200':
+          description: Successful extraction of AccountsReceivable records

@@ -1,0 +1,42 @@
+graph TB
+    subgraph OnPremise ["On-Premise Tier-4 DC (Pune, Maharashtra)"]
+        SAP_ERP["SAP S/4HANA 2023 FPS02<br/>[PRD Client 100]<br/>ACDOCA, BKPF, BSEG, ODP Delta Queues"]
+    end
+
+    subgraph IntegrationAWS ["Meridian Integration Platform [AWS Mumbai ap-south-1 Multi-AZ]"]
+        APIGW["API Gateway and Ingress Controller<br/>[Traefik / NGINX]<br/>Rate limiting, TLS termination, Auth validation"]
+        
+        Scheduler["Distributed Extraction Scheduler<br/>[Node.js / Quartz Engine]<br/>Triggers 30-min ODP deltas and batch runs; respects 01:00-04:30 blackout"]
+        
+        Extractor["SAP Extraction Engine<br/>[Node.js / TypeScript Microservice]<br/>Manages 35 RFC pools, ODP REST/ODATA clients, cursor pagination"]
+        
+        KafkaBroker["Apache Kafka Message Cluster<br/>[3-Node Cluster, Strimzi/MSK]<br/>Topics: raw-extracts, transformed-events, dlq-deadletter"]
+        
+        TransformEngine["Data Transformation and Validation Service<br/>[Node.js / TypeScript Workers]<br/>50+ field mappings, JSON schema validator, currency conversion"]
+        
+        FinSightLoader["FinSight Ingestion Loader<br/>[Node.js / TypeScript Service]<br/>OAuth token manager, micro-batch poster, circuit breaker, retry engine"]
+        
+        ReconService["Reconciliation and Audit Engine<br/>[Node.js / Python Service]<br/>Batch and daily reconciliations, hash totals, variance reporting"]
+        
+        PostgreSQL["Reconciliation and Audit DB<br/>[PostgreSQL 16 Multi-AZ]<br/>Audit ledger, delta tokens, DLQ metadata, recon checkpoints"]
+        
+        PromGrafana["Observability Stack<br/>[Prometheus + Grafana]<br/>12-panel dashboard, 16 alert rules, scraping at 15s"]
+    end
+
+    subgraph TargetCloud ["Zetheta FinSight Cloud (AWS Mumbai ap-south-1)"]
+        FinSightAPI["Zetheta FinSight 4.2 API Gateway<br/>[REST Ingestion Endpoints]<br/>DST-001 to DST-012, Rate Limit: 1000 req/min"]
+    end
+
+    SAP_ERP -->|"ODP Delta REST / RFC (Port 44300)"| Extractor
+    Scheduler -->|"Triggers extraction jobs"| Extractor
+    Extractor -->|"Publishes raw extracted envelopes"| KafkaBroker
+    KafkaBroker -->|"Consumes raw events"| TransformEngine
+    TransformEngine -->|"Validates against 28 Data Quality rules"| PostgreSQL
+    TransformEngine -->|"Routes malformed records"| PostgreSQL
+    TransformEngine -->|"Publishes canonical events"| KafkaBroker
+    KafkaBroker -->|"Consumes transformed events"| FinSightLoader
+    FinSightLoader -->|"OAuth 2.0 Bearer Ingestion (HTTPS)"| FinSightAPI
+    FinSightLoader -->|"Logs load status and receipts"| PostgreSQL
+    ReconService -->|"Queries extraction and load totals"| PostgreSQL
+    ReconService -->|"Fetches SAP balance checksums"| SAP_ERP
+    PromGrafana -->|"Scrapes Prometheus metrics"| IntegrationAWS

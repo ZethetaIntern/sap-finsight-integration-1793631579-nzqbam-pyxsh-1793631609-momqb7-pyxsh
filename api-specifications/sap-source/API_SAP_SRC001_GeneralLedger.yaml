@@ -1,0 +1,27 @@
+openapi: 3.0.3
+info:
+  title: SAP S/4HANA Source - GeneralLedger (SRC001)
+  version: 1.0.0
+  description: Source extraction contract for Universal Journal Line Items backed
+    by SAP table(s) ACDOCA.
+paths:
+  /ZZ_FIN_GL_CDS/GLItems:
+    get:
+      summary: 'SRC001: Extract GeneralLedger'
+      parameters:
+      - name: $filter
+        in: query
+        schema:
+          type: string
+      - name: $skiptoken
+        in: query
+        schema:
+          type: string
+      - name: $top
+        in: query
+        schema:
+          type: integer
+          default: 5000
+      responses:
+        '200':
+          description: Successful extraction of GeneralLedger records

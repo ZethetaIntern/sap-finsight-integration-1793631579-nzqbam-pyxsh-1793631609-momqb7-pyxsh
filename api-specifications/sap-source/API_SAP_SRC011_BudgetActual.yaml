@@ -1,0 +1,27 @@
+openapi: 3.0.3
+info:
+  title: SAP S/4HANA Source - BudgetActual (SRC011)
+  version: 1.0.0
+  description: Source extraction contract for Budget vs Actuals CO Totals backed by
+    SAP table(s) COSP_COSS.
+paths:
+  /ZZ_CO_BGT_CDS/BudgetActuals:
+    get:
+      summary: 'SRC011: Extract BudgetActual'
+      parameters:
+      - name: $filter
+        in: query
+        schema:
+          type: string
+      - name: $skiptoken
+        in: query
+        schema:
+          type: string
+      - name: $top
+        in: query
+        schema:
+          type: integer
+          default: 5000
+      responses:
+        '200':
+          description: Successful extraction of BudgetActual records

@@ -1,0 +1,18 @@
+sequenceDiagram
+    autonumber
+    participant R as Reconciliation Engine
+    participant SAP as SAP S/4HANA (BAPI_ACC_GET_BALANCES)
+    participant FS as FinSight Audit API
+    participant DB as Recon DB
+    participant Aud as Internal Audit (Dr. Kulkarni)
+
+    R->>SAP: Query Batch Debit/Credit Total (PostingDate: 2026-03-15)
+    SAP-->>R: Source Total: INR 24,17,89,342.30 (Count: 6,247)
+    R->>FS: Query Ingested Total (PostingDate: 2026-03-15)
+    FS-->>R: Target Total: INR 24,17,89,340.80 (Count: 6,243)
+    R->>DB: Query Active DLQ for Batch
+    DB-->>R: DLQ Count: 4 Records (Variance Amount: INR 1.50)
+    R->>R: Calculate Variance (INR 1.50 matches DLQ line items exactly)
+    R->>R: Status: RECONCILED_WITH_EXCEPTION (No Phantom Leakage)
+    R->>DB: Persist Batch Recon Report
+    R->>Aud: Publish Automated Reconciliation Report

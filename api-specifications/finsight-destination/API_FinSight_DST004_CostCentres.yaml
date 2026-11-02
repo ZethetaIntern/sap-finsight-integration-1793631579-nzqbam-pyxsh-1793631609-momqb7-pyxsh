@@ -1,0 +1,24 @@
+openapi: 3.0.3
+info:
+  title: FinSight 4.2 Ingestion - CostCentres (DST004)
+  version: 4.2.0
+  description: 'Ingestion contract for Cost Centre Performance in Zetheta FinSight
+    4.2. [Assumed Contract: Standard Zetheta Ingestion Specification].'
+paths:
+  /controlling/cost-centres/batch:
+    post:
+      summary: 'DST004: Ingest CostCentres batch'
+      parameters:
+      - name: X-Tenant-ID
+        in: header
+        required: true
+        schema:
+          type: string
+      - name: X-Idempotency-Key
+        in: header
+        required: true
+        schema:
+          type: string
+      responses:
+        '201':
+          description: CostCentres batch ingested successfully

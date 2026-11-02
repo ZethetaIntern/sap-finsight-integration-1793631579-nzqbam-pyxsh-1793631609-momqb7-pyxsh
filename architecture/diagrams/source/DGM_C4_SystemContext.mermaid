@@ -1,0 +1,30 @@
+graph TB
+    subgraph Enterprise ["Meridian Manufacturing Ltd. Enterprise Perimeter"]
+        UserFinance["Finance Team and Plant Controllers<br/>[Person: Internal Users]"]
+        ExecCFO["CFO and Executive Leadership<br/>[Person: Decision Makers]"]
+        
+        SAP["SAP S/4HANA 2023 FPS02<br/>[Enterprise ERP System]<br/>Core Financials, CO, MM, SD"]
+        MES["Siemens Opcenter<br/>[MES System]<br/>Shopfloor Production Data"]
+        Salesforce["Salesforce Enterprise<br/>[CRM System]<br/>Customer Orders and Pipeline"]
+        Snowflake["Snowflake Enterprise<br/>[Enterprise Data Warehouse]<br/>Long-term Storage"]
+        AzureAD["Azure Active Directory<br/>[Identity Provider]<br/>OAuth 2.0 and SSO"]
+        Nagios["Nagios + Grafana<br/>[IT Monitoring]<br/>Infrastructure Telemetry"]
+    end
+
+    subgraph IntegrationBoundary ["Integration Platform Boundary"]
+        IntegService["Meridian Integration Service<br/>[Integration Solution]<br/>Orchestrates ETL, Kafka, Recon and Monitoring"]
+    end
+
+    subgraph AnalyticsTarget ["Zetheta Analytics Cloud (AWS Mumbai)"]
+        FinSight["Zetheta FinSight 4.2<br/>[Analytics Platform]<br/>Financial Analytics and Executive Dashboards"]
+    end
+
+    UserFinance -->|"Posts Financial Documents"| SAP
+    UserFinance -->|"Accesses Operational Analytics"| FinSight
+    ExecCFO -->|"Monitors 4hr Freshness Dashboards"| FinSight
+
+    IntegService -->|"Extracts ODP Deltas and RFC BAPIs (HTTPS/mTLS, Port 44300)"| SAP
+    IntegService -->|"Fetches OAuth 2.0 Client Tokens (HTTPS 443)"| AzureAD
+    IntegService -->|"Streams Ingestion Micro-batches (REST/JSON, HTTPS 443)"| FinSight
+    IntegService -->|"Publishes Metrics and Health Telemetry"| Nagios
+    IntegService -->|"Replicates Audit Archive (Weekly)"| Snowflake
